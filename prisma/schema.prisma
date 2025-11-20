@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  password  String
+  sessions  Session[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Session {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String      @default("Untitled Session")
+  audioSource String      // "microphone" | "tab_share"
+  status      String      @default("recording") // "recording" | "paused" | "processing" | "completed" | "error"
+  
+  duration    Int         @default(0) // seconds
+  transcript  String?     @db.Text
+  summary     String?     @db.Text
+  
+  chunks      AudioChunk[]
+  
+  startedAt   DateTime    @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime    @updatedAt
+  
+  @@index([userId, status])
+  @@map("sessions")
+}
+
+model AudioChunk {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  sequence  Int      // chunk order
+  audioData Bytes    // binary audio data
+  transcript String? @db.Text
+  
+  timestamp DateTime @default(now())
+  
+  @@unique([sessionId, sequence])
+  @@index([sessionId])
+  @@map("audio_chunks")
+}
