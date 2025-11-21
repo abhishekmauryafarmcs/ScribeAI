@@ -29,14 +29,15 @@ export default function RegisterPage() {
         setLoading(true)
 
         try {
-            const res = await fetch("/api/auth/sign-up", {
+            const res = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password, name }),
             })
 
+            const data = await res.json()
+
             if (!res.ok) {
-                const data = await res.json()
                 throw new Error(data.error || "Registration failed")
             }
 

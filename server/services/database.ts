@@ -40,7 +40,7 @@ export async function updateSession(
     }
 ): Promise<void> {
     try {
-        await prisma.session.update({
+        await prisma.recordingSession.update({
             where: { id: sessionId },
             data,
         })

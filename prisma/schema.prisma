@@ -11,18 +11,54 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String?
-  password  String
-  sessions  Session[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@map("users")
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  recordingSessions  RecordingSession[]
+  accounts          Account[]
+  sessions          BetterSession[]
+  
+  @@map("user")
 }
 
-model Session {
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  accountId         String
+  providerId        String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         DateTime?
+  password          String?
+  
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([providerId, accountId])
+  @@map("account")
+}
+
+model BetterSession {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("session")
+}
+
+model RecordingSession {
   id          String      @id @default(cuid())
   userId      String
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -42,13 +78,13 @@ model Session {
   updatedAt   DateTime    @updatedAt
   
   @@index([userId, status])
-  @@map("sessions")
+  @@map("recording_sessions")
 }
 
 model AudioChunk {
   id        String   @id @default(cuid())
   sessionId String
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session   RecordingSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   
   sequence  Int      // chunk order
   audioData Bytes    // binary audio data

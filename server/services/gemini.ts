@@ -1,6 +1,14 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+// Log API key status (first 10 chars only for security)
+const apiKey = process.env.GEMINI_API_KEY
+console.log("[Gemini] API Key loaded:", apiKey ? `${apiKey.substring(0, 10)}...` : "MISSING")
+
+if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable is not set")
+}
+
+const genAI = new GoogleGenerativeAI(apiKey)
 
 /**
  * Transcribe audio chunk with optional context overlap
@@ -13,11 +21,28 @@ export async function transcribeAudioChunk(
     includeContext: boolean = false
 ): Promise<string> {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+        // Skip empty or very small buffers (less than 1KB likely has no meaningful audio)
+        if (!audioBuffer || audioBuffer.length < 1000) {
+            console.log(`[Gemini] Skipping small audio chunk (${audioBuffer?.length || 0} bytes)`)
+            return ""
+        }
+
+        console.log(`[Gemini] Transcribing audio chunk: ${audioBuffer.length} bytes`)
+
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
 
         const prompt = includeContext
             ? "Continue transcribing this audio. Maintain speaker context from the previous segment. If multiple speakers are present, identify them as Speaker 1, Speaker 2, etc."
-            : "Transcribe this audio accurately. If multiple speakers are present, identify them as Speaker 1, Speaker 2, etc. Include timestamps if possible."
+            : "Transcribe this audio accurately. If multiple speakers are present, identify them as Speaker 1, Speaker 2, etc."
+
+        // Check if buffer starts with WebM signature (0x1A 0x45 0xDF 0xA3)
+        const isValidWebM = audioBuffer[0] === 0x1A && audioBuffer[1] === 0x45 && 
+                           audioBuffer[2] === 0xDF && audioBuffer[3] === 0xA3
+        
+        if (!isValidWebM) {
+            console.log(`[Gemini] Invalid WebM format detected (header: ${audioBuffer.slice(0, 4).toString("hex")})`)
+            return ""
+        }
 
         const result = await model.generateContent([
             {
@@ -29,11 +54,14 @@ export async function transcribeAudioChunk(
             { text: prompt },
         ])
 
-        const response = await result.response
-        return response.text()
-    } catch (error) {
-        console.error("[Gemini] Transcription error:", error)
-        throw new Error("Failed to transcribe audio chunk")
+        const response = result.response
+        const text = response.text()
+        console.log(`[Gemini] Transcription result: ${text?.substring(0, 100) || "(empty)"}`)
+        return text || ""
+    } catch (error: any) {
+        console.error("[Gemini] Transcription error:", error?.message || error)
+        // Return empty string instead of throwing to allow recording to continue
+        return ""
     }
 }
 
@@ -44,7 +72,16 @@ export async function transcribeAudioChunk(
  */
 export async function generateSummary(transcript: string): Promise<string> {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" })
+        console.log(`[Gemini] generateSummary called with transcript length: ${transcript?.length || 0}`)
+        
+        // If transcript is empty or too short, return a default message
+        if (!transcript || transcript.trim().length < 10) {
+            console.log("[Gemini] Transcript too short, returning default message")
+            return "No transcript available to summarize."
+        }
+
+        console.log(`[Gemini] Calling Gemini API for summary...`)
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
 
         const prompt = `
 Analyze this meeting transcript and provide a comprehensive summary in the following format:
@@ -68,10 +105,15 @@ Format your response in Markdown.
 `
 
         const result = await model.generateContent(prompt)
-        const response = await result.response
-        return response.text()
-    } catch (error) {
-        console.error("[Gemini] Summary generation error:", error)
-        throw new Error("Failed to generate summary")
+        const response = result.response
+        const summaryText = response.text()
+        console.log(`[Gemini] Summary generated successfully, length: ${summaryText.length}`)
+        return summaryText
+    } catch (error: any) {
+        console.error("[Gemini] Summary generation error:", error?.message || error)
+        // Return a fallback summary instead of throwing
+        const fallback = `## Summary\n\nTranscript: ${transcript.substring(0, 500)}${transcript.length > 500 ? "..." : ""}`
+        console.log(`[Gemini] Returning fallback summary`)
+        return fallback
     }
 }

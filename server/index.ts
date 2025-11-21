@@ -1,16 +1,27 @@
+import "dotenv/config"
 import { Server } from "socket.io"
 import { createServer } from "http"
 import { handleRecording } from "./handlers/recording"
 
 const httpServer = createServer()
 
+const allowedOrigins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    process.env.FRONTEND_URL,
+].filter(Boolean)
+
+console.log("[WebSocket] Allowed CORS origins:", allowedOrigins)
+
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:3000",
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
         credentials: true,
+        allowedHeaders: ["*"],
     },
     maxHttpBufferSize: 5e6, // 5MB per chunk
+    transports: ["websocket", "polling"],
 })
 
 io.on("connection", (socket) => {

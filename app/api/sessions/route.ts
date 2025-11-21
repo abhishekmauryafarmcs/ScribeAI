@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { cookies } from "next/headers"
 import prisma from "@/lib/prisma"
 
 /**
@@ -7,13 +7,24 @@ import prisma from "@/lib/prisma"
  */
 export async function GET(req: Request) {
     try {
-        const session = await auth.api.getSession({ headers: req.headers })
+        const cookieStore = await cookies()
+        const sessionToken = cookieStore.get("session")?.value
 
-        if (!session?.user) {
+        if (!sessionToken) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        const sessions = await prisma.session.findMany({
+        // Verify session
+        const session = await prisma.betterSession.findUnique({
+            where: { token: sessionToken },
+            include: { user: true },
+        })
+
+        if (!session || session.expiresAt < new Date()) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        const sessions = await prisma.recordingSession.findMany({
             where: { userId: session.user.id },
             orderBy: { startedAt: "desc" },
             select: {
@@ -39,16 +50,27 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
     try {
-        const session = await auth.api.getSession({ headers: req.headers })
+        const cookieStore = await cookies()
+        const sessionToken = cookieStore.get("session")?.value
 
-        if (!session?.user) {
+        if (!sessionToken) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+        }
+
+        // Verify session
+        const session = await prisma.betterSession.findUnique({
+            where: { token: sessionToken },
+            include: { user: true },
+        })
+
+        if (!session || session.expiresAt < new Date()) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
         const body = await req.json()
         const { title, audioSource } = body
 
-        const newSession = await prisma.session.create({
+        const newSession = await prisma.recordingSession.create({
             data: {
                 userId: session.user.id,
                 title: title || "Untitled Session",

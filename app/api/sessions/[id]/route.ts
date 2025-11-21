@@ -1,20 +1,41 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { cookies } from "next/headers"
 import prisma from "@/lib/prisma"
+
+async function getAuthenticatedUser() {
+    const cookieStore = await cookies()
+    const sessionToken = cookieStore.get("session")?.value
+
+    if (!sessionToken) {
+        return null
+    }
+
+    const session = await prisma.betterSession.findUnique({
+        where: { token: sessionToken },
+        include: { user: true },
+    })
+
+    if (!session || session.expiresAt < new Date()) {
+        return null
+    }
+
+    return session.user
+}
 
 /**
  * GET /api/sessions/[id] - Get single session details
  */
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const session = await auth.api.getSession({ headers: req.headers })
+        const { id } = await params
+        const user = await getAuthenticatedUser()
 
-        if (!session?.user) {
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        const sessionData = await prisma.session.findUnique({
-            where: { id: params.id },
+        const sessionData = await prisma.recordingSession.findUnique({
+            where: { id },
             include: {
                 chunks: {
                     orderBy: { sequence: "asc" },
@@ -32,7 +53,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         }
 
         // Check ownership
-        if (sessionData.userId !== session.user.id) {
+        if (sessionData.userId !== user.id) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
@@ -46,26 +67,27 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 /**
  * PATCH /api/sessions/[id] - Update session
  */
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const session = await auth.api.getSession({ headers: req.headers })
+        const { id } = await params
+        const user = await getAuthenticatedUser()
 
-        if (!session?.user) {
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
         // Check ownership
-        const existingSession = await prisma.session.findUnique({
-            where: { id: params.id },
+        const existingSession = await prisma.recordingSession.findUnique({
+            where: { id },
         })
 
-        if (!existingSession || existingSession.userId !== session.user.id) {
+        if (!existingSession || existingSession.userId !== user.id) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
         const body = await req.json()
-        const updatedSession = await prisma.session.update({
-            where: { id: params.id },
+        const updatedSession = await prisma.recordingSession.update({
+            where: { id },
             data: body,
         })
 
@@ -79,25 +101,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 /**
  * DELETE /api/sessions/[id] - Delete session
  */
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const session = await auth.api.getSession({ headers: req.headers })
+        const { id } = await params
+        const user = await getAuthenticatedUser()
 
-        if (!session?.user) {
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
         // Check ownership
-        const existingSession = await prisma.session.findUnique({
-            where: { id: params.id },
+        const existingSession = await prisma.recordingSession.findUnique({
+            where: { id },
         })
 
-        if (!existingSession || existingSession.userId !== session.user.id) {
+        if (!existingSession || existingSession.userId !== user.id) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
 
-        await prisma.session.delete({
-            where: { id: params.id },
+        await prisma.recordingSession.delete({
+            where: { id },
         })
 
         return NextResponse.json({ success: true })

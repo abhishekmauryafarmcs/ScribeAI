@@ -17,24 +17,32 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
     const streamRef = useRef<MediaStream | null>(null)
+    const recognitionRef = useRef<any>(null)
     const sequenceRef = useRef(0)
     const timerRef = useRef<NodeJS.Timeout | null>(null)
+    const transcriptBufferRef = useRef<string>("")
+    const isRecordingRef = useRef(false)
 
     const socket = useSocket()
 
     useEffect(() => {
         if (!socket) return
 
+        console.log("[AudioRecorder] Setting up socket listeners")
+
         socket.on("status-update", ({ status }: { status: RecordingState }) => {
+            console.log("[AudioRecorder] Status update:", status)
             setState(status)
         })
 
         socket.on("session-complete", () => {
+            console.log("[AudioRecorder] Session complete event received")
             setState("completed")
             onComplete?.()
         })
 
         return () => {
+            console.log("[AudioRecorder] Cleaning up socket listeners")
             socket.off("status-update")
             socket.off("session-complete")
         }
@@ -62,80 +70,272 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
 
     const startRecording = async () => {
         try {
-            const stream =
-                audioSource === "microphone"
-                    ? await navigator.mediaDevices.getUserMedia({
+            let stream: MediaStream
+
+            if (audioSource === "microphone") {
+                // Microphone recording with Web Speech API
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 48000,
+                    },
+                })
+
+                streamRef.current = stream
+
+                // Initialize Web Speech API for microphone
+                const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+                
+                if (!SpeechRecognition) {
+                    alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.")
+                    return
+                }
+
+                const recognition = new SpeechRecognition()
+                recognition.continuous = true
+                recognition.interimResults = true
+                recognition.lang = "en-US"
+
+                recognitionRef.current = recognition
+
+                // Handle speech recognition results
+                recognition.onresult = (event: any) => {
+                    let finalTranscript = ""
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript + " "
+                        }
+                    }
+
+                    // Send final transcript to server
+                    if (finalTranscript) {
+                        transcriptBufferRef.current += finalTranscript
+                        socket?.emit("transcript-chunk", {
+                            sessionId,
+                            transcript: finalTranscript.trim(),
+                            sequence: sequenceRef.current++,
+                            isFinal: true,
+                        })
+                    }
+                }
+
+                recognition.onerror = (event: any) => {
+                    console.error("Speech recognition error:", event.error)
+                    if (event.error === "no-speech") {
+                        // Restart recognition if no speech detected
+                        if (recognitionRef.current && state === "recording") {
+                            try {
+                                recognition.start()
+                            } catch (e) {
+                                // Already started
+                            }
+                        }
+                    }
+                }
+
+                recognition.onend = () => {
+                    // Restart recognition if still recording
+                    if (recognitionRef.current && state === "recording") {
+                        try {
+                            recognition.start()
+                        } catch (e) {
+                            console.error("Failed to restart recognition:", e)
+                        }
+                    }
+                }
+
+                // Start speech recognition
+                recognition.start()
+            } else {
+                // Tab share recording - use Web Audio API to mix with microphone for speech recognition
+                try {
+                    // Get tab audio
+                    const tabStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: true, // Required for getDisplayMedia
                         audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            sampleRate: 48000,
-                        },
-                    })
-                    : await navigator.mediaDevices.getDisplayMedia({
-                        video: false,
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            sampleRate: 48000,
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
                         } as any,
                     })
 
-            streamRef.current = stream
-
-            const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: "audio/webm;codecs=opus",
-                audioBitsPerSecond: 128000,
-            })
-
-            mediaRecorderRef.current = mediaRecorder
-
-            // Send chunk every 30 seconds
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    const reader = new FileReader()
-                    reader.onloadend = () => {
-                        socket?.emit("audio-chunk", {
-                            sessionId,
-                            chunkData: Array.from(new Uint8Array(reader.result as ArrayBuffer)),
-                            sequence: sequenceRef.current++,
-                        })
+                    // Check if audio track is present
+                    const audioTracks = tabStream.getAudioTracks()
+                    if (audioTracks.length === 0) {
+                        alert("No audio track found. Please make sure to check 'Share tab audio' when selecting the tab.")
+                        tabStream.getTracks().forEach(track => track.stop())
+                        return
                     }
-                    reader.readAsArrayBuffer(event.data)
+
+                    console.log("Tab audio tracks:", audioTracks.length)
+
+                    // Stop video track (we only need audio)
+                    const videoTrack = tabStream.getVideoTracks()[0]
+                    if (videoTrack) {
+                        videoTrack.stop()
+                        tabStream.removeTrack(videoTrack)
+                    }
+
+                    streamRef.current = tabStream
+
+                    // Create Web Audio API context to process the audio
+                    const audioContext = new AudioContext()
+                    const tabSource = audioContext.createMediaStreamSource(tabStream)
+                    
+                    // Create a destination for the processed audio
+                    const destination = audioContext.createMediaStreamDestination()
+                    
+                    // Connect tab audio to destination
+                    tabSource.connect(destination)
+
+                    // Use Web Speech API with the processed audio
+                    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+                    
+                    if (!SpeechRecognition) {
+                        alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.")
+                        tabStream.getTracks().forEach(track => track.stop())
+                        return
+                    }
+
+                    // Create a MediaRecorder that stops/starts every 30 seconds for complete WebM files
+                    const startNewRecorder = () => {
+                        if (!streamRef.current || !streamRef.current.active) {
+                            return
+                        }
+
+                        const mediaRecorder = new MediaRecorder(streamRef.current, {
+                            mimeType: "audio/webm;codecs=opus",
+                            audioBitsPerSecond: 128000,
+                        })
+
+                        mediaRecorderRef.current = mediaRecorder
+
+                        // When data is available (after stop), send it
+                        mediaRecorder.ondataavailable = (event) => {
+                            if (event.data.size > 0) {
+                                console.log(`[Tab Audio] Sending chunk ${sequenceRef.current}, size: ${event.data.size}`)
+                                const reader = new FileReader()
+                                reader.onloadend = () => {
+                                    socket?.emit("audio-chunk", {
+                                        sessionId,
+                                        chunkData: Array.from(new Uint8Array(reader.result as ArrayBuffer)),
+                                        sequence: sequenceRef.current++,
+                                    })
+                                }
+                                reader.readAsArrayBuffer(event.data)
+                            }
+                        }
+
+                        mediaRecorder.onstop = () => {
+                            console.log(`[Tab Audio] Recorder stopped, isRecording: ${isRecordingRef.current}`)
+                            // Start a new recorder after a brief delay if still recording
+                            if (streamRef.current && streamRef.current.active && isRecordingRef.current) {
+                                console.log(`[Tab Audio] Starting new recorder...`)
+                                setTimeout(() => startNewRecorder(), 100)
+                            }
+                        }
+
+                        mediaRecorder.onerror = (event) => {
+                            console.error("MediaRecorder error:", event)
+                        }
+
+                        // Start recording - will automatically stop after 30 seconds
+                        mediaRecorder.start()
+                        
+                        // Stop after 30 seconds to create a complete WebM file
+                        setTimeout(() => {
+                            if (mediaRecorder.state === "recording") {
+                                mediaRecorder.stop()
+                            }
+                        }, 30000)
+                    }
+
+                    // Start the first recorder
+                    startNewRecorder()
+
+                } catch (err) {
+                    console.error("Failed to capture tab:", err)
+                    alert("Failed to capture tab audio. Please select a tab with audio and grant permission.")
+                    return
                 }
             }
 
-            mediaRecorder.onerror = (event) => {
-                console.error("MediaRecorder error:", event)
-                alert("Recording error occurred")
-                stopRecording()
-            }
-
-            mediaRecorder.start(30000) // 30s chunks
             socket?.emit("start-recording", { sessionId, audioSource })
             setState("recording")
             setElapsedTime(0)
+            transcriptBufferRef.current = ""
+            isRecordingRef.current = true
         } catch (err) {
             console.error("Failed to start recording:", err)
             alert(
-                "Failed to access microphone/tab. Please grant permission and try again."
+                "Failed to access audio source. Please grant permission and try again."
             )
         }
     }
 
     const pauseRecording = () => {
-        mediaRecorderRef.current?.pause()
+        isRecordingRef.current = false
+        
+        // Stop speech recognition (for microphone)
+        recognitionRef.current?.stop()
+        
+        // Stop media recorder (for tab share)
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+            mediaRecorderRef.current.stop()
+        }
+        
         socket?.emit("pause-recording", { sessionId })
     }
 
     const resumeRecording = () => {
-        mediaRecorderRef.current?.resume()
-        socket?.emit("resume-recording", { sessionId })
+        try {
+            isRecordingRef.current = true
+            
+            // Resume speech recognition (for microphone)
+            if (recognitionRef.current) {
+                recognitionRef.current.start()
+            }
+            
+            socket?.emit("resume-recording", { sessionId })
+        } catch (e) {
+            console.error("Failed to resume recognition:", e)
+        }
     }
 
     const stopRecording = () => {
-        mediaRecorderRef.current?.stop()
+        isRecordingRef.current = false
+        
+        // Stop speech recognition
+        if (recognitionRef.current) {
+            recognitionRef.current.stop()
+            recognitionRef.current = null
+        }
+        
+        // Stop media recorder and clear interval
+        if (mediaRecorderRef.current) {
+            const sendInterval = (mediaRecorderRef.current as any)?.sendInterval
+            if (sendInterval) {
+                clearInterval(sendInterval)
+            }
+            
+            if (mediaRecorderRef.current.state !== "inactive") {
+                mediaRecorderRef.current.stop()
+            }
+            mediaRecorderRef.current = null
+        }
+        
+        // Stop all tracks
         streamRef.current?.getTracks().forEach((track) => track.stop())
-        socket?.emit("stop-recording", { sessionId })
+        streamRef.current = null
+        
+        // Send final transcript buffer
+        socket?.emit("stop-recording", { 
+            sessionId,
+            finalTranscript: transcriptBufferRef.current 
+        })
     }
 
     // Auto-save on page unload
@@ -165,6 +365,11 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
                     Audio Recording
                 </h2>
+                {state !== "idle" && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        Source: {audioSource === "microphone" ? "🎤 Microphone" : "🖥️ Tab Share"}
+                    </p>
+                )}
                 <div className="text-4xl font-mono font-bold text-indigo-600 dark:text-indigo-400">
                     {formatTime(elapsedTime)}
                 </div>
@@ -181,9 +386,21 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
                             onChange={(e) => setAudioSource(e.target.value as "microphone" | "tab")}
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         >
-                            <option value="microphone">Microphone</option>
-                            <option value="tab">Tab Share (Google Meet/Zoom)</option>
+                            <option value="microphone">🎤 Microphone</option>
+                            <option value="tab">🖥️ Tab Share (Google Meet/Zoom)</option>
                         </select>
+                        {audioSource === "tab" && (
+                            <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <p className="text-xs text-blue-800 dark:text-blue-200 font-medium mb-1">
+                                    💡 Important: Tab Share Instructions
+                                </p>
+                                <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                                    <li>Select the browser tab with audio (YouTube, Meet, Zoom, etc.)</li>
+                                    <li><strong>Check "Share tab audio"</strong> in the browser dialog</li>
+                                    <li>Transcription may take longer as audio is processed by AI</li>
+                                </ul>
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={startRecording}

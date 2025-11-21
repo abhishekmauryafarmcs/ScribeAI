@@ -54,8 +54,24 @@ export default function DashboardPage() {
     }
 
     const handleLogout = async () => {
-        await fetch("/api/auth/sign-out", { method: "POST" })
+        await fetch("/api/auth/logout", { method: "POST" })
         router.push("/")
+    }
+
+    const handleDeleteSession = async (id: string) => {
+        try {
+            const res = await fetch(`/api/sessions/${id}`, {
+                method: "DELETE",
+            })
+
+            if (!res.ok) throw new Error("Failed to delete session")
+
+            // Refresh sessions list
+            setSessions(sessions.filter((s: any) => s.id !== id))
+        } catch (error) {
+            console.error("Error deleting session:", error)
+            alert("Failed to delete session")
+        }
     }
 
     return (
@@ -112,7 +128,7 @@ export default function DashboardPage() {
                             <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto" />
                         </div>
                     ) : (
-                        <SessionList sessions={sessions} />
+                        <SessionList sessions={sessions} onDelete={handleDeleteSession} />
                     )}
                 </div>
             </div>
