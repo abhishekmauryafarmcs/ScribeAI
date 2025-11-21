@@ -275,6 +275,17 @@ User → Browser (Speech API/MediaRecorder)
      → WebSocket → Browser (Live Updates)
 ```
 
+Real-time Speech Processing Cycle
+User Speech Input
+Browser Display
+Browser Processing
+WebSocket Update
+WebSocket Transmission
+PostgreSQL Storage
+Server Processing
+Gemini API Integration<img width="1584" height="1620" alt="image" src="https://github.com/user-attachments/assets/61309aaa-7130-42ae-bdfb-fef2be8972c1" />
+
+
 ## 🔧 Technical Details
 
 ### Audio Processing
