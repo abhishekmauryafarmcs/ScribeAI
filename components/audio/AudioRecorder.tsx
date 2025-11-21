@@ -331,10 +331,11 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
         streamRef.current?.getTracks().forEach((track) => track.stop())
         streamRef.current = null
 
-        // Send final transcript buffer
+        // Send final transcript buffer and duration
         socket?.emit("stop-recording", {
             sessionId,
-            finalTranscript: transcriptBufferRef.current
+            finalTranscript: transcriptBufferRef.current,
+            duration: elapsedTime
         })
     }
 

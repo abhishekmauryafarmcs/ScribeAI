@@ -137,9 +137,9 @@ export function handleRecording(socket: Socket, io: Server) {
     /**
      * Stop recording and generate summary
      */
-    socket.on("stop-recording", async ({ sessionId, finalTranscript }) => {
+    socket.on("stop-recording", async ({ sessionId, finalTranscript, duration }) => {
         try {
-            console.log(`[Recording] Stopping session ${sessionId}`)
+            console.log(`[Recording] Stopping session ${sessionId}, duration: ${duration}s`)
 
             io.to(sessionId).emit("status-update", { status: "processing" })
             await updateSession(sessionId, { status: "processing" })
@@ -163,6 +163,7 @@ export function handleRecording(socket: Socket, io: Server) {
                 status: "completed",
                 transcript: fullTranscript,
                 summary,
+                duration: duration || 0,
                 completedAt: new Date(),
             })
 

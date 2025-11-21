@@ -51,65 +51,85 @@ export function SessionList({ sessions, onDelete }: SessionListProps) {
     }
 
     return (
-        <div className="space-y-4">
-            {sessions.map((session) => (
-                <div key={session.id} className="relative group">
-                    <Link href={`/sessions/${session.id}`}>
-                        <div className="glass-card rounded-xl p-6 hover:bg-white/10 transition-all cursor-pointer border border-white/5 hover:border-primary/50">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">
+        <div className="grid grid-cols-1 gap-6">
+            {sessions.map((session, index) => (
+                <div 
+                    key={session.id} 
+                    className="group animate-slide-up"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                >
+                    <div className="glass-card rounded-2xl p-6 border border-white/10 hover:border-primary/50 transition-all duration-300 hover:scale-[1.02] relative overflow-hidden">
+                        {/* Hover gradient effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        
+                        <Link href={`/sessions/${session.id}`} className="relative z-10">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0 pr-12">
+                                    {/* Title */}
+                                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-primary transition-colors truncate">
                                         {session.title}
                                     </h3>
-                                    <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
-                                        <span className="flex items-center gap-1">
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    
+                                    {/* Metadata */}
+                                    <div className="flex flex-wrap items-center gap-3 text-sm text-white/60 mb-3">
+                                        <span className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                                            <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
                                                 <path
                                                     fillRule="evenodd"
                                                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
                                                     clipRule="evenodd"
                                                 />
                                             </svg>
-                                            {formatDuration(session.duration)}
+                                            <span className="font-medium text-white">{formatDuration(session.duration)}</span>
                                         </span>
-                                        <span className="flex items-center gap-1">
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <span className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                                            <svg className="w-4 h-4 text-secondary" fill="currentColor" viewBox="0 0 20 20">
                                                 <path
                                                     fillRule="evenodd"
-                                                    d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
                                                     clipRule="evenodd"
                                                 />
                                             </svg>
-                                            {new Date(session.startedAt).toLocaleDateString()}
+                                            <span className="font-medium text-white">
+                                                {new Date(session.startedAt).toLocaleTimeString('en-US', { 
+                                                    hour: 'numeric', 
+                                                    minute: '2-digit',
+                                                    hour12: true 
+                                                })}
+                                            </span>
                                         </span>
-                                        <span className="capitalize px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
-                                            {session.audioSource === "tab" ? "Tab Share" : "Microphone"}
+                                        <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 text-white font-medium">
+                                            {session.audioSource === "tab" ? "🖥️ Tab Share" : "🎤 Microphone"}
+                                        </span>
+                                    </div>
+
+                                    {/* Status Badge */}
+                                    <div className="inline-flex">
+                                        <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${getStatusColor(session.status)}`}>
+                                            {session.status}
                                         </span>
                                     </div>
                                 </div>
-                                <span
-                                    className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(session.status)}`}
-                                >
-                                    {session.status}
-                                </span>
                             </div>
-                        </div>
-                    </Link>
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            if (confirm("Are you sure you want to delete this session?")) {
-                                onDelete(session.id)
-                            }
-                        }}
-                        className="absolute top-4 right-4 p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all opacity-0 group-hover:opacity-100"
-                        title="Delete Session"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
+                        </Link>
+
+                        {/* Delete Button - Absolute positioned outside content flow */}
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                if (confirm("Are you sure you want to delete this session?")) {
+                                    onDelete(session.id)
+                                }
+                            }}
+                            className="absolute top-6 right-6 z-20 p-2.5 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 border border-transparent hover:border-red-500/30"
+                            title="Delete Session"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             ))}
         </div>
