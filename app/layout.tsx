@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import { CursorGlow } from "@/components/ui/CursorGlow"
 
 export const metadata: Metadata = {
     title: "ScribeAI - AI-Powered Meeting Transcription",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className="antialiased">{children}</body>
+            <body className="antialiased">
+                <CursorGlow />
+                {children}
+            </body>
         </html>
     )
 }
