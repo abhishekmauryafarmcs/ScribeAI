@@ -24,26 +24,26 @@ export function SessionList({ sessions, onDelete }: SessionListProps) {
     const getStatusColor = (status: string) => {
         switch (status) {
             case "completed":
-                return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                return "bg-green-500/20 text-green-200 border-green-500/50"
             case "recording":
-                return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                return "bg-red-500/20 text-red-200 border-red-500/50 animate-pulse"
             case "paused":
-                return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                return "bg-yellow-500/20 text-yellow-200 border-yellow-500/50"
             case "processing":
-                return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                return "bg-blue-500/20 text-blue-200 border-blue-500/50"
             default:
-                return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                return "bg-gray-500/20 text-gray-200 border-gray-500/50"
         }
     }
 
     if (sessions.length === 0) {
         return (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 text-center">
+            <div className="glass-card rounded-2xl p-12 text-center border border-white/10">
                 <div className="text-6xl mb-4">🎙️</div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                <h3 className="text-xl font-bold text-white mb-2">
                     No sessions yet
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-white/60">
                     Start your first recording session to see it here
                 </p>
             </div>
@@ -55,13 +55,13 @@ export function SessionList({ sessions, onDelete }: SessionListProps) {
             {sessions.map((session) => (
                 <div key={session.id} className="relative group">
                     <Link href={`/sessions/${session.id}`}>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-2xl transition-shadow cursor-pointer border border-transparent hover:border-indigo-500">
+                        <div className="glass-card rounded-xl p-6 hover:bg-white/10 transition-all cursor-pointer border border-white/5 hover:border-primary/50">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
+                                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">
                                         {session.title}
                                     </h3>
-                                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                                    <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
                                         <span className="flex items-center gap-1">
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                 <path
@@ -82,13 +82,13 @@ export function SessionList({ sessions, onDelete }: SessionListProps) {
                                             </svg>
                                             {new Date(session.startedAt).toLocaleDateString()}
                                         </span>
-                                        <span className="capitalize">
+                                        <span className="capitalize px-2 py-0.5 rounded bg-white/5 border border-white/10 text-xs">
                                             {session.audioSource === "tab" ? "Tab Share" : "Microphone"}
                                         </span>
                                     </div>
                                 </div>
                                 <span
-                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(session.status)}`}
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(session.status)}`}
                                 >
                                     {session.status}
                                 </span>
@@ -103,7 +103,7 @@ export function SessionList({ sessions, onDelete }: SessionListProps) {
                                 onDelete(session.id)
                             }
                         }}
-                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                        className="absolute top-4 right-4 p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all opacity-0 group-hover:opacity-100"
                         title="Delete Session"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

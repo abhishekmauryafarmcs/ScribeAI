@@ -58,9 +58,9 @@ export default function SessionPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-12">
-                    <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto" />
+            <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+                <div className="glass-card rounded-2xl shadow-2xl p-12 border border-white/10">
+                    <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto" />
                 </div>
             </div>
         )
@@ -68,12 +68,12 @@ export default function SessionPage() {
 
     if (!session) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-12 text-center">
-                    <p className="text-red-600 font-bold text-xl">Session not found</p>
+            <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+                <div className="glass-card rounded-2xl shadow-2xl p-12 text-center border border-white/10">
+                    <p className="text-red-400 font-bold text-xl">Session not found</p>
                     <button
                         onClick={goBack}
-                        className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                        className="mt-4 px-6 py-2 bg-primary/20 border border-primary/50 text-white rounded-lg font-medium hover:bg-primary/30 transition-colors"
                     >
                         Back to Dashboard
                     </button>
@@ -83,15 +83,21 @@ export default function SessionPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 md:p-8">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen relative overflow-hidden p-4 md:p-8">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+                <div className="absolute top-[-20%] right-[20%] w-96 h-96 bg-primary/20 rounded-full blur-[150px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-20%] left-[20%] w-96 h-96 bg-accent/10 rounded-full blur-[150px] animate-pulse-slow delay-1000"></div>
+            </div>
+
+            <div className="max-w-6xl mx-auto relative z-10">
                 {/* Header */}
                 <div className="mb-8">
                     <button
                         onClick={goBack}
-                        className="mb-4 px-4 py-2 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors flex items-center gap-2"
+                        className="mb-4 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-lg font-medium hover:bg-white/10 transition-colors flex items-center gap-2 group"
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -101,10 +107,11 @@ export default function SessionPage() {
                         </svg>
                         Back to Dashboard
                     </button>
-                    <h1 className="text-4xl font-bold text-white drop-shadow-lg">
+                    <h1 className="text-4xl font-bold text-white mb-2">
                         {session.title}
                     </h1>
-                    <p className="text-white/80 mt-2">
+                    <p className="text-white/60 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-secondary"></span>
                         Started: {new Date(session.startedAt).toLocaleString()}
                     </p>
                 </div>

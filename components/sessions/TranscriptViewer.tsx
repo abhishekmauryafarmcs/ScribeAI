@@ -36,21 +36,21 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
                 const res = await fetch(`/api/sessions/${sessionId}`)
                 if (res.ok) {
                     const data = await res.json()
-                    
+
                     if (data.transcript) {
                         setFullTranscript(data.transcript)
                     }
-                    
+
                     if (data.summary) {
                         setSummary(data.summary)
                     }
-                    
+
                     if (data.chunks && data.chunks.length > 0) {
                         const chunks = data.chunks.map((chunk: any) => ({
                             sequence: chunk.sequence,
                             text: chunk.transcript || ""
                         })).filter((c: TranscriptChunk) => c.text)
-                        
+
                         setTranscriptChunks(chunks)
                     }
                 }
@@ -138,9 +138,9 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
     if (loading) {
         return (
             <div className="space-y-6">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 text-center">
-                    <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto" />
-                    <p className="text-gray-600 dark:text-gray-400 mt-4">Loading session data...</p>
+                <div className="glass-card rounded-2xl p-12 text-center border border-white/10">
+                    <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+                    <p className="text-white/60 mt-4">Loading session data...</p>
                 </div>
             </div>
         )
@@ -149,22 +149,22 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
     return (
         <div className="space-y-6">
             {/* Live Transcript */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            <div className="glass-card rounded-2xl p-8 border border-white/10">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+                    <h3 className="text-xl font-bold text-white">
                         Transcript
                     </h3>
                     {(transcriptChunks.length > 0 || fullTranscript) && (
                         <div className="flex gap-2">
                             <button
                                 onClick={() => exportTranscript("txt")}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                                className="px-4 py-2 bg-primary/20 border border-primary/50 text-white rounded-lg text-sm font-medium hover:bg-primary/30 transition-all"
                             >
                                 Export TXT
                             </button>
                             <button
                                 onClick={() => exportTranscript("json")}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+                                className="px-4 py-2 bg-secondary/20 border border-secondary/50 text-white rounded-lg text-sm font-medium hover:bg-secondary/30 transition-all"
                             >
                                 Export JSON
                             </button>
@@ -172,26 +172,26 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
                     )}
                 </div>
 
-                <div className="max-h-96 overflow-y-auto space-y-3 bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="max-h-96 overflow-y-auto space-y-3 bg-black/20 rounded-lg p-4 border border-white/5 custom-scrollbar">
                     {transcriptChunks.length === 0 && !fullTranscript ? (
-                        <p className="text-gray-500 dark:text-gray-400 text-center italic">
+                        <p className="text-white/40 text-center italic">
                             Transcript will appear here as you record...
                         </p>
                     ) : transcriptChunks.length > 0 ? (
                         transcriptChunks.map((chunk) => (
                             <div
                                 key={chunk.sequence}
-                                className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 animate-slide-up"
+                                className="p-3 bg-white/5 rounded-lg border border-white/10 animate-slide-up hover:bg-white/10 transition-colors"
                             >
-                                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                    Chunk {chunk.sequence + 1}
+                                <span className="text-xs text-primary font-mono mb-1 block">
+                                    CHUNK_{String(chunk.sequence + 1).padStart(3, '0')}
                                 </span>
-                                <p className="text-gray-800 dark:text-gray-200 mt-1">{chunk.text}</p>
+                                <p className="text-white/90 leading-relaxed">{chunk.text}</p>
                             </div>
                         ))
                     ) : (
-                        <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{fullTranscript}</p>
+                        <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                            <p className="text-white/90 whitespace-pre-wrap leading-relaxed">{fullTranscript}</p>
                         </div>
                     )}
                     <div ref={scrollRef} />
@@ -200,13 +200,13 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
 
             {/* AI Summary */}
             {summary && (
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-xl p-8">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                <div className="glass-card rounded-2xl p-8 border border-accent/30">
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                         <span className="text-2xl">🤖</span>
                         AI Summary
                     </h3>
                     <div
-                        className="prose prose-indigo dark:prose-invert max-w-none"
+                        className="prose prose-invert max-w-none prose-p:text-white/80 prose-headings:text-white prose-strong:text-secondary"
                         dangerouslySetInnerHTML={{ __html: summary.replace(/\n/g, "<br/>") }}
                     />
                 </div>

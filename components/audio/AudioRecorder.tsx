@@ -86,7 +86,7 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
 
                 // Initialize Web Speech API for microphone
                 const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-                
+
                 if (!SpeechRecognition) {
                     alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.")
                     return
@@ -184,16 +184,16 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
                     // Create Web Audio API context to process the audio
                     const audioContext = new AudioContext()
                     const tabSource = audioContext.createMediaStreamSource(tabStream)
-                    
+
                     // Create a destination for the processed audio
                     const destination = audioContext.createMediaStreamDestination()
-                    
+
                     // Connect tab audio to destination
                     tabSource.connect(destination)
 
                     // Use Web Speech API with the processed audio
                     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-                    
+
                     if (!SpeechRecognition) {
                         alert("Speech recognition is not supported in your browser. Please use Chrome or Edge.")
                         tabStream.getTracks().forEach(track => track.stop())
@@ -244,7 +244,7 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
 
                         // Start recording - will automatically stop after 30 seconds
                         mediaRecorder.start()
-                        
+
                         // Stop after 30 seconds to create a complete WebM file
                         setTimeout(() => {
                             if (mediaRecorder.state === "recording") {
@@ -278,27 +278,27 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
 
     const pauseRecording = () => {
         isRecordingRef.current = false
-        
+
         // Stop speech recognition (for microphone)
         recognitionRef.current?.stop()
-        
+
         // Stop media recorder (for tab share)
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
             mediaRecorderRef.current.stop()
         }
-        
+
         socket?.emit("pause-recording", { sessionId })
     }
 
     const resumeRecording = () => {
         try {
             isRecordingRef.current = true
-            
+
             // Resume speech recognition (for microphone)
             if (recognitionRef.current) {
                 recognitionRef.current.start()
             }
-            
+
             socket?.emit("resume-recording", { sessionId })
         } catch (e) {
             console.error("Failed to resume recognition:", e)
@@ -307,34 +307,34 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
 
     const stopRecording = () => {
         isRecordingRef.current = false
-        
+
         // Stop speech recognition
         if (recognitionRef.current) {
             recognitionRef.current.stop()
             recognitionRef.current = null
         }
-        
+
         // Stop media recorder and clear interval
         if (mediaRecorderRef.current) {
             const sendInterval = (mediaRecorderRef.current as any)?.sendInterval
             if (sendInterval) {
                 clearInterval(sendInterval)
             }
-            
+
             if (mediaRecorderRef.current.state !== "inactive") {
                 mediaRecorderRef.current.stop()
             }
             mediaRecorderRef.current = null
         }
-        
+
         // Stop all tracks
         streamRef.current?.getTracks().forEach((track) => track.stop())
         streamRef.current = null
-        
+
         // Send final transcript buffer
-        socket?.emit("stop-recording", { 
+        socket?.emit("stop-recording", {
             sessionId,
-            finalTranscript: transcriptBufferRef.current 
+            finalTranscript: transcriptBufferRef.current
         })
     }
 
@@ -360,17 +360,17 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
     }
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
+        <div className="glass-card rounded-2xl shadow-xl p-8 space-y-6 border border-white/10">
             <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                <h2 className="text-2xl font-bold text-white mb-2">
                     Audio Recording
                 </h2>
                 {state !== "idle" && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <p className="text-sm text-white/60 mb-2">
                         Source: {audioSource === "microphone" ? "🎤 Microphone" : "🖥️ Tab Share"}
                     </p>
                 )}
-                <div className="text-4xl font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                <div className="text-5xl font-mono font-bold text-primary tracking-wider">
                     {formatTime(elapsedTime)}
                 </div>
             </div>
@@ -378,23 +378,23 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
             {state === "idle" && (
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-white/80 mb-2">
                             Audio Source
                         </label>
                         <select
                             value={audioSource}
                             onChange={(e) => setAudioSource(e.target.value as "microphone" | "tab")}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 text-white dark:bg-black/20 dark:border-white/10"
                         >
-                            <option value="microphone">🎤 Microphone</option>
-                            <option value="tab">🖥️ Tab Share (Google Meet/Zoom)</option>
+                            <option value="microphone" className="bg-gray-900">🎤 Microphone</option>
+                            <option value="tab" className="bg-gray-900">🖥️ Tab Share (Google Meet/Zoom)</option>
                         </select>
                         {audioSource === "tab" && (
-                            <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <p className="text-xs text-blue-800 dark:text-blue-200 font-medium mb-1">
+                            <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                                <p className="text-xs text-blue-200 font-medium mb-1">
                                     💡 Important: Tab Share Instructions
                                 </p>
-                                <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                                <ul className="text-xs text-blue-300 space-y-1 list-disc list-inside">
                                     <li>Select the browser tab with audio (YouTube, Meet, Zoom, etc.)</li>
                                     <li><strong>Check "Share tab audio"</strong> in the browser dialog</li>
                                     <li>Transcription may take longer as audio is processed by AI</li>
@@ -404,33 +404,33 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
                     </div>
                     <button
                         onClick={startRecording}
-                        className="w-full bg-red-600 text-white py-4 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-lg font-semibold transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:shadow-[0_0_30px_rgba(239,68,68,0.6)] flex items-center justify-center gap-2 group"
                     >
-                        <div className="w-4 h-4 bg-white rounded-full" />
+                        <div className="w-4 h-4 bg-white rounded-full group-hover:scale-110 transition-transform" />
                         Start Recording
                     </button>
                 </div>
             )}
 
             {state === "recording" && (
-                <div className="space-y-4">
-                    <div className="flex items-center justify-center gap-2">
+                <div className="space-y-6">
+                    <div className="flex items-center justify-center gap-3">
                         <div className="relative">
-                            <div className="w-4 h-4 bg-red-600 rounded-full animate-pulse" />
-                            <div className="absolute inset-0 w-4 h-4 bg-red-600 rounded-full recording-pulse" />
+                            <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+                            <div className="absolute inset-0 w-4 h-4 bg-red-500 rounded-full animate-ping opacity-75" />
                         </div>
-                        <span className="text-red-600 font-semibold">Recording...</span>
+                        <span className="text-red-400 font-semibold tracking-wide animate-pulse">RECORDING LIVE</span>
                     </div>
                     <div className="flex gap-3">
                         <button
                             onClick={pauseRecording}
-                            className="flex-1 bg-yellow-500 text-white py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors"
+                            className="flex-1 bg-yellow-500/20 border border-yellow-500/50 text-yellow-200 py-3 rounded-lg font-semibold hover:bg-yellow-500/30 transition-all hover:shadow-[0_0_15px_rgba(234,179,8,0.3)]"
                         >
                             ⏸ Pause
                         </button>
                         <button
                             onClick={stopRecording}
-                            className="flex-1 bg-gray-700 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+                            className="flex-1 bg-white/10 border border-white/20 text-white py-3 rounded-lg font-semibold hover:bg-white/20 transition-all hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
                         >
                             ⏹ Stop
                         </button>
@@ -440,17 +440,17 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
 
             {state === "paused" && (
                 <div className="space-y-4">
-                    <div className="text-center text-yellow-600 font-semibold">⏸ Paused</div>
+                    <div className="text-center text-yellow-400 font-semibold tracking-wide">⏸ PAUSED</div>
                     <div className="flex gap-3">
                         <button
                             onClick={resumeRecording}
-                            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                            className="flex-1 bg-green-500/20 border border-green-500/50 text-green-200 py-3 rounded-lg font-semibold hover:bg-green-500/30 transition-all hover:shadow-[0_0_15px_rgba(34,197,94,0.3)]"
                         >
                             ▶ Resume
                         </button>
                         <button
                             onClick={stopRecording}
-                            className="flex-1 bg-gray-700 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+                            className="flex-1 bg-white/10 border border-white/20 text-white py-3 rounded-lg font-semibold hover:bg-white/20 transition-all hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
                         >
                             ⏹ Stop
                         </button>
@@ -460,18 +460,18 @@ export function AudioRecorder({ sessionId, onComplete }: AudioRecorderProps) {
 
             {state === "processing" && (
                 <div className="text-center space-y-4">
-                    <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto" />
-                    <p className="text-gray-600 dark:text-gray-400">Processing summary...</p>
+                    <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto shadow-[0_0_15px_rgba(112,0,255,0.5)]" />
+                    <p className="text-white/60 animate-pulse">Processing summary...</p>
                 </div>
             )}
 
             {state === "completed" && (
                 <div className="text-center space-y-4">
-                    <div className="text-green-600 text-5xl">✓</div>
-                    <p className="text-gray-800 dark:text-white font-semibold">
+                    <div className="text-green-400 text-6xl filter drop-shadow-[0_0_10px_rgba(74,222,128,0.5)]">✓</div>
+                    <p className="text-white font-semibold text-lg">
                         Session completed!
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-white/60">
                         View transcript and summary below.
                     </p>
                 </div>

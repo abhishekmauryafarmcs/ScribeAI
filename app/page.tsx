@@ -28,14 +28,14 @@ export default function HomePage() {
                     <div className="flex flex-col sm:flex-row gap-6 justify-center mt-10">
                         <Link
                             href="/auth/login"
-                            className="group relative px-8 py-4 bg-primary/10 border border-primary/50 text-primary-foreground rounded-lg font-semibold overflow-hidden transition-all hover:bg-primary/20 hover:border-primary hover:shadow-[0_0_20px_rgba(112,0,255,0.4)]"
+                            className="group relative px-8 py-4 bg-primary/10 border border-primary/50 text-primary-foreground rounded-lg font-semibold overflow-hidden transition-all hover:bg-primary/20 hover:border-primary"
                         >
                             <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
                             <span className="relative z-10 text-white">Login</span>
                         </Link>
                         <Link
                             href="/auth/register"
-                            className="group relative px-8 py-4 bg-transparent border border-white/20 text-white rounded-lg font-semibold overflow-hidden transition-all hover:bg-white/5 hover:border-white/50 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                            className="group relative px-8 py-4 bg-transparent border border-white/20 text-white rounded-lg font-semibold overflow-hidden transition-all hover:bg-white/5 hover:border-white/50"
                         >
                             <span className="relative z-10">Sign Up</span>
                         </Link>

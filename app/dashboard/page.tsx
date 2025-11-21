@@ -75,22 +75,28 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 md:p-8">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen relative overflow-hidden p-4 md:p-8">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+                <div className="absolute top-[-20%] left-[20%] w-96 h-96 bg-primary/20 rounded-full blur-[150px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-20%] right-[20%] w-96 h-96 bg-secondary/10 rounded-full blur-[150px] animate-pulse-slow delay-1000"></div>
+            </div>
+
+            <div className="max-w-6xl mx-auto relative z-10">
                 {/* Header */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 mb-8">
-                    <div className="flex items-center justify-between">
+                <div className="glass-card rounded-2xl p-8 mb-8 border border-white/10">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">
+                            <h1 className="text-4xl font-bold text-white mb-2 text-glow">
                                 ScribeAI Dashboard
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-400">
+                            <p className="text-white/60">
                                 Manage your recording sessions
                             </p>
                         </div>
                         <button
                             onClick={handleLogout}
-                            className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                            className="px-6 py-2 bg-red-500/20 border border-red-500/50 text-red-200 rounded-lg font-medium hover:bg-red-500/30 hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all"
                         >
                             Logout
                         </button>
@@ -101,10 +107,11 @@ export default function DashboardPage() {
                 <div className="mb-8">
                     <button
                         onClick={createNewSession}
-                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-6 rounded-2xl font-bold text-xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-2xl flex items-center justify-center gap-3"
+                        className="w-full bg-gradient-to-r from-primary/80 to-secondary/80 text-white py-6 rounded-2xl font-bold text-xl hover:from-primary hover:to-secondary transition-all shadow-[0_0_20px_rgba(112,0,255,0.3)] hover:shadow-[0_0_30px_rgba(112,0,255,0.5)] flex items-center justify-center gap-3 border border-white/10 relative overflow-hidden group"
                     >
+                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
                         <svg
-                            className="w-8 h-8"
+                            className="w-8 h-8 relative z-10"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -116,16 +123,16 @@ export default function DashboardPage() {
                                 d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                             />
                         </svg>
-                        Start New Session
+                        <span className="relative z-10">Start New Session</span>
                     </button>
                 </div>
 
                 {/* Session History */}
                 <div>
-                    <h2 className="text-2xl font-bold text-white mb-4">Recent Sessions</h2>
+                    <h2 className="text-2xl font-bold text-white mb-6 text-glow-secondary">Recent Sessions</h2>
                     {loading ? (
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 text-center">
-                            <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto" />
+                        <div className="glass-card rounded-2xl p-12 text-center border border-white/10">
+                            <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto shadow-[0_0_15px_rgba(112,0,255,0.5)]" />
                         </div>
                     ) : (
                         <SessionList sessions={sessions} onDelete={handleDeleteSession} />

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function RegisterPage() {
     const [name, setName] = useState("")
@@ -50,22 +51,42 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
-            <div className="w-full max-w-md">
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
-                    <h2 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">
-                        Create Account
-                    </h2>
+        <div className="min-h-screen flex items-center justify-center relative overflow-hidden p-4">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+                <div className="absolute top-[-10%] right-[-10%] w-1/2 h-1/2 bg-primary/20 rounded-full blur-[120px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-1/2 h-1/2 bg-accent/10 rounded-full blur-[120px] animate-pulse-slow delay-700"></div>
+            </div>
+
+            {/* Home Icon */}
+            <Link
+                href="/"
+                className="absolute top-8 left-8 p-3 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 transition-all group z-20"
+                title="Back to Home"
+            >
+                <svg className="w-6 h-6 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </Link>
+
+            <div className="w-full max-w-md relative z-10">
+                <div className="glass-card rounded-2xl p-8 border border-white/10">
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-white mb-2 text-glow">
+                            Create Account
+                        </h2>
+                        <p className="text-white/60">Join ScribeAI and start transcribing</p>
+                    </div>
 
                     {error && (
-                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                        <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 text-red-200 rounded-lg text-sm backdrop-blur-sm">
                             {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-2">
                                 Name
                             </label>
                             <input
@@ -74,13 +95,13 @@ export default function RegisterPage() {
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-white placeholder-white/30 transition-all"
                                 placeholder="John Doe"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
                                 Email
                             </label>
                             <input
@@ -89,13 +110,13 @@ export default function RegisterPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-white placeholder-white/30 transition-all"
                                 placeholder="you@example.com"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
                                 Password
                             </label>
                             <input
@@ -104,13 +125,13 @@ export default function RegisterPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-white placeholder-white/30 transition-all"
                                 placeholder="••••••••"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">
                                 Confirm Password
                             </label>
                             <input
@@ -119,7 +140,7 @@ export default function RegisterPage() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary text-white placeholder-white/30 transition-all"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -127,17 +148,18 @@ export default function RegisterPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-semibold transition-all shadow-[0_0_15px_rgba(112,0,255,0.3)] hover:shadow-[0_0_25px_rgba(112,0,255,0.5)] disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
                         >
-                            {loading ? "Creating account..." : "Sign Up"}
+                            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1s_infinite]"></div>
+                            <span className="relative z-10">{loading ? "Creating account..." : "Sign Up"}</span>
                         </button>
                     </form>
 
-                    <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+                    <p className="mt-8 text-center text-sm text-white/60">
                         Already have an account?{" "}
-                        <a href="/auth/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
+                        <Link href="/auth/login" className="text-secondary hover:text-secondary-glow transition-colors font-medium">
                             Login
-                        </a>
+                        </Link>
                     </p>
                 </div>
             </div>
