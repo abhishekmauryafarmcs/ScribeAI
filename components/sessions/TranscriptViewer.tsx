@@ -24,14 +24,9 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
     const socket = useSocket()
     const scrollRef = useRef<HTMLDivElement>(null)
 
-    // Load session data from API if not provided
+    // Load session data from API
     useEffect(() => {
         const loadSessionData = async () => {
-            if (initialTranscript || initialSummary || initialChunks) {
-                setLoading(false)
-                return
-            }
-
             try {
                 const res = await fetch(`/api/sessions/${sessionId}`)
                 if (res.ok) {
@@ -45,6 +40,7 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
                         setSummary(data.summary)
                     }
 
+                    // Always load chunks from database
                     if (data.chunks && data.chunks.length > 0) {
                         const chunks = data.chunks.map((chunk: any) => ({
                             sequence: chunk.sequence,
@@ -52,6 +48,7 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
                         })).filter((c: TranscriptChunk) => c.text)
 
                         setTranscriptChunks(chunks)
+                        console.log("[TranscriptViewer] Loaded chunks:", chunks.length)
                     }
                 }
             } catch (error) {
@@ -62,7 +59,7 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
         }
 
         loadSessionData()
-    }, [sessionId, initialTranscript, initialSummary, initialChunks])
+    }, [sessionId])
 
     useEffect(() => {
         if (!socket) {
@@ -148,7 +145,45 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
 
     return (
         <div className="space-y-6">
-            {/* Live Transcript */}
+            {/* AI Summary - Show first */}
+            {summary && (
+                <div className="glass-card rounded-2xl p-8 border border-accent/30">
+                    <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                        <span className="text-3xl">🤖</span>
+                        ScribeAI Summary
+                    </h3>
+                    <div className="prose prose-invert max-w-none prose-p:text-white/80 prose-headings:text-white prose-strong:text-secondary prose-li:text-white/80 prose-h2:text-xl prose-h2:font-bold prose-h2:mb-3 prose-h2:mt-6 prose-ul:list-disc prose-ul:ml-6">
+                        {summary.split('\n').map((line, index) => {
+                            // Handle markdown headers
+                            if (line.startsWith('## ')) {
+                                return <h2 key={index} className="text-xl font-bold text-white mb-3 mt-6">{line.replace('## ', '')}</h2>
+                            }
+                            // Handle list items
+                            if (line.trim().startsWith('- ')) {
+                                return <li key={index} className="text-white/80 ml-6">{line.replace(/^- /, '')}</li>
+                            }
+                            // Handle bold text
+                            if (line.includes('**')) {
+                                const parts = line.split('**')
+                                return (
+                                    <p key={index} className="text-white/80 mb-2">
+                                        {parts.map((part, i) => 
+                                            i % 2 === 1 ? <strong key={i} className="text-secondary font-semibold">{part}</strong> : part
+                                        )}
+                                    </p>
+                                )
+                            }
+                            // Regular paragraph
+                            if (line.trim()) {
+                                return <p key={index} className="text-white/80 mb-2">{line}</p>
+                            }
+                            return null
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Transcript - Show second */}
             <div className="glass-card rounded-2xl p-8 border border-white/10">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-white">
@@ -177,7 +212,7 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
                         <p className="text-white/40 text-center italic">
                             Transcript will appear here as you record...
                         </p>
-                    ) : transcriptChunks.length > 0 ? (
+                    ) : (
                         transcriptChunks.map((chunk) => (
                             <div
                                 key={chunk.sequence}
@@ -189,28 +224,10 @@ export function TranscriptViewer({ sessionId, initialTranscript, initialSummary,
                                 <p className="text-white/90 leading-relaxed">{chunk.text}</p>
                             </div>
                         ))
-                    ) : (
-                        <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-                            <p className="text-white/90 whitespace-pre-wrap leading-relaxed">{fullTranscript}</p>
-                        </div>
                     )}
                     <div ref={scrollRef} />
                 </div>
             </div>
-
-            {/* AI Summary */}
-            {summary && (
-                <div className="glass-card rounded-2xl p-8 border border-accent/30">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                        <span className="text-2xl">🤖</span>
-                        AI Summary
-                    </h3>
-                    <div
-                        className="prose prose-invert max-w-none prose-p:text-white/80 prose-headings:text-white prose-strong:text-secondary"
-                        dangerouslySetInnerHTML={{ __html: summary.replace(/\n/g, "<br/>") }}
-                    />
-                </div>
-            )}
         </div>
     )
 }

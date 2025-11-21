@@ -14,7 +14,7 @@ export function handleRecording(socket: Socket, io: Server) {
      */
     socket.on("start-recording", async ({ sessionId, userId, audioSource }) => {
         try {
-            console.log(`[Recording] Starting session ${sessionId} for user ${userId}`)
+            console.log(`[Recording] Starting session ${sessionId} for user ${userId} with audioSource: ${audioSource}`)
             console.log(`[Recording] Socket ${socket.id} joining room ${sessionId}`)
 
             sessionBuffers.set(sessionId, [])
@@ -25,6 +25,12 @@ export function handleRecording(socket: Socket, io: Server) {
             // Verify socket joined the room
             const rooms = Array.from(socket.rooms)
             console.log(`[Recording] Socket ${socket.id} is now in rooms:`, rooms)
+
+            // Update session with the actual audioSource selected by user
+            await updateSession(sessionId, { 
+                audioSource: audioSource || "microphone",
+                status: "recording" 
+            })
 
             io.to(sessionId).emit("status-update", { status: "recording" })
         } catch (error) {

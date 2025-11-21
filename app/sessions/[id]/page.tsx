@@ -116,13 +116,19 @@ export default function SessionPage() {
                     </p>
                 </div>
 
-                {/* Recording Interface */}
-                <div className="mb-8">
-                    <AudioRecorder sessionId={sessionId} onComplete={handleComplete} />
-                </div>
+                {/* Recording Interface - Only show if not completed */}
+                {session.status !== "completed" && (
+                    <div className="mb-8">
+                        <AudioRecorder sessionId={sessionId} onComplete={handleComplete} />
+                    </div>
+                )}
 
-                {/* Transcript Viewer */}
-                <TranscriptViewer sessionId={sessionId} />
+                {/* Transcript Viewer - Summary first, then transcript */}
+                <TranscriptViewer 
+                    sessionId={sessionId}
+                    initialTranscript={session.transcript}
+                    initialSummary={session.summary}
+                />
             </div>
         </div>
     )
