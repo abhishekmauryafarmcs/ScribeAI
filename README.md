@@ -2,6 +2,8 @@
 
 Real-time audio transcription and AI-powered meeting summaries using Google's Gemini 2.0 Flash.
 
+Video Link :  https://youtu.be/Gv0GOShQNbo
+
 ## Features
 
 - 🎤 **Microphone Recording** - Real-time transcription using Web Speech API
@@ -375,7 +377,7 @@ This project demonstrates:
 **Abhishek Maurya**
 - GitHub: [@abhishekmauryafarmcs](https://github.com/abhishekmauryafarmcs)
 - LinkedIn: [Abhishek Maurya](https://www.linkedin.com/in/abhishek-maurya-707106158/)
-
+- Video Link :  https://youtu.be/Gv0GOShQNbo
 ## 💝 Special Thanks
 
 A heartfelt thank you to the **Attack Capital Team** for this opportunity. This project was built as a 36-hour hackathon challenge, demonstrating passion for creating real impact through technology.
