@@ -378,7 +378,7 @@ This project demonstrates:
 
 ## 💝 Special Thanks
 
-A heartfelt thank you to the **Attack Capital Team** for this opportunity. This project was built as a 24-hour hackathon challenge, demonstrating passion for creating real impact through technology.
+A heartfelt thank you to the **Attack Capital Team** for this opportunity. This project was built as a 36-hour hackathon challenge, demonstrating passion for creating real impact through technology.
 
 ---
 

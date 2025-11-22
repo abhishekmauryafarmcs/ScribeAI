@@ -66,7 +66,7 @@ export function WelcomeModal() {
                             </p>
                             
                             <p>
-                                I took this assignment as a <strong className="text-primary">24-hour hackathon challenge</strong> — it's now part of my habit to accept challenges and try to achieve them. Every time, I get to learn something new.
+                                I took this assignment as a <strong className="text-primary">36-hour hackathon challenge</strong> — it's now part of my habit to accept challenges and try to achieve them. Every time, I get to learn something new.
                             </p>
                             
                             <p>
